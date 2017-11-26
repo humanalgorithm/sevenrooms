@@ -11,66 +11,83 @@ time_7_pm = dt.time(19, 0, 0)
 time_730_pm = dt.time(19, 30, 0)
 time_745_pm = dt.time(19, 45, 0)
 
+class TimeUtility():
+    def sort_times(self, time_block_list):
+        sorted_list = sorted(time_block_list, key=lambda k: k.get()['start'])
+        return sorted_list
 
 class TimeCalculuation():
     def __init__(self):
         self.availability_start = dt.time(17, 0, 0)
         self.availability_end = dt.time(21, 0, 0)
+        self.start_key = "start"
+        self.end_key = "end"
 
-    def sort_times(self, time_list):
-        return sorted(time_list, key=lambda k: k['start'])
-
-    def return_all_free(self):
-        free_blocks = [{"start": self.availability_start, "end": self.availability_end}]
-        return free_blocks
-
-    def get_free_blocks(self, bookings):
-        if not bookings:
-            return self.return_all_free()
-
-        bookings = self.sort_times(bookings)
+    def get_free_blocks(self, schedule_time_blocks):
+        if not schedule_time_blocks:
+            return self._return_all_free()
+        schedule_time_blocks = TimeUtility().sort_times(schedule_time_blocks)
         earliest_free_time = self.availability_start
+        return self._process_schedule_time_blocks(schedule_time_blocks, earliest_free_time)
+
+    def _process_schedule_time_blocks(self, schedule_time_blocks, earliest_free_time):
         free_blocks = []
-        for i in range(0, len(bookings)):
-            booking = bookings[i]
-            if booking['start'] != earliest_free_time:
-                free_time_block = {"start": earliest_free_time, "end": booking['start']}
+        for counter in range(0, len(schedule_time_blocks)):
+            schedule_time_block = schedule_time_blocks[counter]
+            if not schedule_time_block.get()[self.start_key] == earliest_free_time:
+                free_time_block = TimeBlock(**{self.start_key: earliest_free_time, self.end_key: schedule_time_block.get()[self.start_key]})
                 free_blocks.append(free_time_block)
-            earliest_free_time = booking['end']
+            earliest_free_time = schedule_time_block.get()[self.end_key]
 
-            if i == len(bookings)-1:
-               free_time_block = {"start": earliest_free_time, "end": self.availability_end}
-               free_blocks.append(free_time_block)
-
+            if counter == len(schedule_time_blocks)-1:
+                free_time_block = TimeBlock(**{self.start_key: earliest_free_time, self.end_key: self.availability_end})
+                free_blocks.append(free_time_block)
         return free_blocks
+
+    def _return_all_free(self):
+        free_blocks = [TimeBlock(**{self.start_key: self.availability_start, self.end_key: self.availability_end})]
+        return free_blocks
+
+
+class ReservationService():
+    def add_reservation(self, time_block, table):
+        table.add_reservation(time_block)
+        existing_reservations = table.get_reservations()
+        table.set_free_times(TimeCalculuation().get_free_blocks(existing_reservations))
+
+class TimeBlock():
+    def __init__(self, start, end):
+        self.time_block = {"start": start, "end": end}
+
+    def __repr__(self):
+        return "{}".format(self.time_block)
+
+    def get(self):
+        return self.time_block
 
 class Table():
     def __init__(self, name, seat_range):
         self.name = name
         self.seat_range = seat_range
-        self.bookings = []
-        self.free_times = TimeCalculuation().get_free_blocks(self.bookings)
+        self.reservations = []
+        self.free_times = TimeCalculuation().get_free_blocks(self.reservations)
 
     def __repr__(self):
-        return "Name: {} Seat Range: {} bookings: {} free_times: {}".format(self.name, self.seat_range, self.bookings, self.free_times)
+        return "Name: {} Seat Range: {} Reservations: {} Free Times: {}".format(self.name, self.seat_range, self.reservations, self.free_times)
 
-    def add_booking(self, booking):
-        self.bookings.append(booking)
-        self.free_times = TimeCalculuation().get_free_blocks(self.bookings)
+    def get_reservations(self):
+        return self.reservations
 
-    def get_bookings(self):
-        return self.bookings
+    def set_free_times(self, free_times):
+        self.free_times = free_times
 
     def get_free_times(self):
         return self.free_times
 
-    def set_up_bookings(self):
-        bookings = [{"start": time_6_pm, "end": time_7_pm},
-                    {"start": time_730_pm, "end": time_745_pm},
-                    {"start": time_5_pm, "end": time_530_pm}]
+    def add_reservation(self, reservation):
+        self.reservations.append(reservation)
+        self.reservations = TimeUtility().sort_times(self.reservations)
 
-        for booking in bookings:
-            self.add_booking(booking)
 
 class TableList():
     def __init__(self, table_setup):
@@ -98,11 +115,23 @@ class RunProgram():
         table_list = TableList(self.table_setup).get_tables()
         print table_list
 
-        print "table A...."
-        print "----"
+        print "table A"
         table_A = table_list['A']
-        table_A.set_up_bookings()
-        print table_A
+        reservation1 = TimeBlock(time_6_pm, time_7_pm)
+        reservation2 = TimeBlock(time_730_pm, time_745_pm)
+        reservation3 = TimeBlock(time_5_pm, time_530_pm)
+
+
+        ReservationService().add_reservation(reservation1, table_A)
+        ReservationService().add_reservation(reservation2, table_A)
+        ReservationService().add_reservation(reservation3, table_A)
+
+        print "Table A Reservations are ..."
+
+        print table_A.get_reservations()
+
+        print "Table A free times are"
+        print table_A.get_free_times()
 
 
 run_program = RunProgram()
