@@ -1,49 +1,76 @@
 import datetime as dt
 
+time_5_pm = dt.time(17, 0, 0)
+
+time_530_pm = dt.time(17, 30, 0)
+time_9_pm = dt.time(21, 0 ,0)
+
+time_6_pm = dt.time(18, 0, 0)
+time_7_pm = dt.time(19, 0, 0)
+
+time_730_pm = dt.time(19, 30, 0)
+time_745_pm = dt.time(19, 45, 0)
+
 
 class TimeCalculuation():
-    def run(self):
-        time_5_pm = dt.time(17, 0, 0)
-        time_9_pm = dt.time(21, 0 ,0)
+    def __init__(self):
+        self.availability_start = dt.time(17, 0, 0)
+        self.availability_end = dt.time(21, 0, 0)
 
-        time_6_pm = dt.time(18, 0, 0)
-        time_7_pm = dt.time(19, 0, 0)
+    def sort_times(self, time_list):
+        return sorted(time_list, key=lambda k: k['start'])
 
-        time_730_pm = dt.time(19, 30, 0)
-        time_745_pm =  dt.time(19, 45, 0)
+    def return_all_free(self):
+        free_blocks = [{"start": self.availability_start, "end": self.availability_end}]
+        return free_blocks
 
-        print "time 5 pm: ", time_5_pm
-        print "time 9 pm: ", time_9_pm
+    def get_free_blocks(self, bookings):
+        if not bookings:
+            return self.return_all_free()
 
-        bookings = [{"start": time_6_pm, "end": time_7_pm },
-                    {"start": time_730_pm, "end": time_745_pm}]
-
+        bookings = self.sort_times(bookings)
+        earliest_free_time = self.availability_start
         free_blocks = []
-
-        earliest_free_time = time_5_pm
-        end_of_night = time_9_pm
         for i in range(0, len(bookings)):
             booking = bookings[i]
-            free_time_block = {"start": earliest_free_time, "end": booking['start']}
-            free_blocks.append(free_time_block)
+            if booking['start'] != earliest_free_time:
+                free_time_block = {"start": earliest_free_time, "end": booking['start']}
+                free_blocks.append(free_time_block)
             earliest_free_time = booking['end']
 
             if i == len(bookings)-1:
-               free_time_block = {"start": earliest_free_time, "end": end_of_night}
+               free_time_block = {"start": earliest_free_time, "end": self.availability_end}
                free_blocks.append(free_time_block)
 
-        print free_blocks
+        return free_blocks
 
 class Table():
-    def __init__(self, name, seat_range, booked_times=None, free_times = None):
+    def __init__(self, name, seat_range):
         self.name = name
         self.seat_range = seat_range
-        self.booked_times = []
-        self.free_times = []
+        self.bookings = []
+        self.free_times = TimeCalculuation().get_free_blocks(self.bookings)
 
     def __repr__(self):
-        return "Name: {} Seat Range: {} ".format(self.name, self.seat_range)
+        return "Name: {} Seat Range: {} bookings: {} free_times: {}".format(self.name, self.seat_range, self.bookings, self.free_times)
 
+    def add_booking(self, booking):
+        self.bookings.append(booking)
+        self.free_times = TimeCalculuation().get_free_blocks(self.bookings)
+
+    def get_bookings(self):
+        return self.bookings
+
+    def get_free_times(self):
+        return self.free_times
+
+    def set_up_bookings(self):
+        bookings = [{"start": time_6_pm, "end": time_7_pm},
+                    {"start": time_730_pm, "end": time_745_pm},
+                    {"start": time_5_pm, "end": time_530_pm}]
+
+        for booking in bookings:
+            self.add_booking(booking)
 
 class TableList():
     def __init__(self, table_setup):
@@ -71,7 +98,14 @@ class RunProgram():
         table_list = TableList(self.table_setup).get_tables()
         print table_list
 
+        print "table A...."
+        print "----"
+        table_A = table_list['A']
+        table_A.set_up_bookings()
+        print table_A
 
-# run_program = RunProgram()
-# run_program.run()
-TimeCalculuation().run()
+
+run_program = RunProgram()
+run_program.run()
+#TimeCalculuation().run()
+
