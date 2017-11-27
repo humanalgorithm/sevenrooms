@@ -31,7 +31,48 @@ class TimeCalculuation():
             return False
         return True
 
-    def get_free_time_blocks_after_adding_schedule_block(self, schedule_time_blocks):
+    def compute_free_blocks(self, schedule_time_blocks):
+        def _process_schedule_time_blocks(schedule_time_blocks, free_time_blocks):
+            earliest_time = self.availability_start
+            for counter in range(0, len(schedule_time_blocks)):
+                latest_time = _get_latest_time(counter, schedule_time_blocks)
+                _process_block(schedule_time_blocks[counter], free_time_blocks, earliest_time, latest_time)
+                earliest_time = schedule_time_blocks[counter].get()[self.end_key]
+                _process_if_last_block(schedule_time_blocks, counter)
+            return free_time_blocks
+
+        def _get_latest_time(counter, schedule_time_blocks):
+            if counter+1 < len(schedule_time_blocks):
+                return schedule_time_blocks[counter+1].get()[self.start_key]
+            else:
+                return self.availability_end
+
+        def _process_block(schedule_time_block, free_time_blocks, earliest_time, latest_time):
+            schedule_block_start = schedule_time_block.get()[self.start_key]
+            schedule_block_end = schedule_time_block.get()[self.end_key]
+            if schedule_block_start == self.availability_start:
+                earliest_time = schedule_block_end
+            if schedule_block_start >= earliest_time and schedule_block_end <= latest_time:
+                free_time_blocks.append(TimeBlock(**{self.start_key: earliest_time,
+                     self.end_key: schedule_time_block.get()[self.start_key]}))
+
+        def _process_if_last_block(schedule_time_blocks, counter):
+            if counter == len(schedule_time_blocks)-1:
+                free_time_blocks.append(TimeBlock(**{self.start_key: schedule_time_blocks[counter].get()[self.end_key],
+                     self.end_key: self.availability_end}))
+
+        def _return_all_free():
+            free_blocks = [TimeBlock(**{self.start_key: self.availability_start, self.end_key: self.availability_end})]
+            return free_blocks
+
+        if not schedule_time_blocks:
+            return _return_all_free()
+        schedule_time_blocks = TimeUtility().sort_times(schedule_time_blocks)
+        free_time_blocks = []
+        return _process_schedule_time_blocks(schedule_time_blocks, free_time_blocks)
+
+    '''
+    def compute_free_blocks(self, schedule_time_blocks):
         def _process_schedule_time_blocks(schedule_time_blocks, earliest_free_time):
             free_blocks = []
             for counter in range(0, len(schedule_time_blocks)):
@@ -42,7 +83,7 @@ class TimeCalculuation():
             return free_blocks
 
         def _add_time_block_if_not_overlap_earliest_time(schedule_time_block, free_blocks, earliest_free_time):
-            if not schedule_time_block.get()[self.start_key] == earliest_free_time:
+            if schedule_time_block.get()[self.start_key] >= earliest_free_time:
                 free_blocks.append(TimeBlock(**{self.start_key: earliest_free_time,
                                                 self.end_key: schedule_time_block.get()[self.start_key]}))
 
@@ -50,13 +91,8 @@ class TimeCalculuation():
             if counter == len(schedule_time_blocks)-1:
                 free_blocks.append(TimeBlock(**{self.start_key: earliest_free_time, self.end_key: self.availability_end}))
 
-        if not schedule_time_blocks:
-            return self._return_all_free()
+
         schedule_time_blocks = TimeUtility().sort_times(schedule_time_blocks)
         earliest_free_time = self.availability_start
         return _process_schedule_time_blocks(schedule_time_blocks, earliest_free_time)
-
-
-    def _return_all_free(self):
-        free_blocks = [TimeBlock(**{self.start_key: self.availability_start, self.end_key: self.availability_end})]
-        return free_blocks
+    '''

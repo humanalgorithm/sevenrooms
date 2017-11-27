@@ -1,12 +1,14 @@
 from time_calc import TimeCalculuation, TimeUtility
 
+
+
 class Table():
     def __init__(self, name, seat_min, seat_max):
         self.name = name
         self.seat_min = seat_min
         self.seat_max = seat_max
         self.reservations = []
-        self.free_times = TimeCalculuation().get_free_time_blocks_after_adding_schedule_block(self.reservations)
+        self.free_times = TimeCalculuation().compute_free_blocks(self.reservations)
 
     def __repr__(self):
         return "Name: {} Seat Range: {}-{} Reservations: {} Free Times: {}".format(
@@ -30,15 +32,13 @@ class TableList:
     class __TableList:
         def __init__(self, table_setup):
             self.table_setup = table_setup
-            self.tables = {}
+            self.tables = []
             self.init_tables()
 
         def init_tables(self):
-            for key, value in self.table_setup.iteritems():
-                seat_min = min(value)
-                seat_max = max(value)
-                table = Table(name=key, seat_min=seat_min, seat_max=seat_max)
-                self.tables[key] = table
+            for entry in self.table_setup:
+                table = Table(name=entry["name"], seat_min=entry["min"], seat_max=entry["max"])
+                self.tables.append(table)
     instance = None
     def __init__(self, table_setup=None):
         if not TableList.instance:
