@@ -1,5 +1,5 @@
 # Sevenrooms Seating Table Reservation Program
-![ScreenShot](https://raw.githubusercontent.com/humanalgorithm/nsone/master/sevenrooms-screenshot.png)
+![ScreenShot](https://raw.githubusercontent.com/humanalgorithm/sevenrooms/master/sevenrooms-screenshot.png)
 
 ## What is it? 
 This program computes reservation times for a set of seating tables based on the party size to occupy the table and reservation time requested. The program comes with a script to setup a simulation of tables and reservation requests. Once the program is run it will display all of the reservations(time block and party size) per table along with the remaning free time blocks on that table. 
