@@ -1,7 +1,5 @@
 from time_calc import TimeCalculuation, TimeUtility
 
-
-
 class Table():
     def __init__(self, name, seat_min, seat_max):
         self.name = name
